@@ -671,6 +671,8 @@ MachineInstrBuilder MachineIRBuilder::buildUnmerge(ArrayRef<LLT> Res,
   // sufficiently large SmallVector to not go through the heap.
   SmallVector<DstOp, 8> TmpVec(Res.begin(), Res.end());
   assert(TmpVec.size() > 1);
+  assert(Res[0].isScalar() &&
+         "expected destination of G_UNMERGE_VALUES to be scalar");
   return buildInstr(TargetOpcode::G_UNMERGE_VALUES, TmpVec, Op);
 }
 
@@ -678,6 +680,8 @@ MachineInstrBuilder MachineIRBuilder::buildUnmerge(LLT Res,
                                                    const SrcOp &Op) {
   unsigned NumReg = Op.getLLTTy(*getMRI()).getSizeInBits() / Res.getSizeInBits();
   SmallVector<DstOp, 8> TmpVec(NumReg, Res);
+  assert(Res.isScalar() &&
+         "expected destination of G_UNMERGE_VALUES to be scalar");
   return buildInstr(TargetOpcode::G_UNMERGE_VALUES, TmpVec, Op);
 }
 
@@ -688,6 +692,8 @@ MachineInstrBuilder MachineIRBuilder::buildUnmerge(ArrayRef<Register> Res,
   // sufficiently large SmallVector to not go through the heap.
   SmallVector<DstOp, 8> TmpVec(Res.begin(), Res.end());
   assert(TmpVec.size() > 1);
+  assert(getMRI()->getType(Res[0]).isScalar() &&
+         "expected destination of G_UNMERGE_VALUES to be scalar");
   return buildInstr(TargetOpcode::G_UNMERGE_VALUES, TmpVec, Op);
 }
 
