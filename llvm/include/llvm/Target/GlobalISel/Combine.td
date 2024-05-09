@@ -1591,6 +1591,97 @@ def insert_vector_elt_oob : GICombineRule<
          [{ return Helper.matchInsertVectorElementOOB(*${root}, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def extract_vector_element_addrspace : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_ADDRSPACE_CAST $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_fpext : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_FPEXT $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_fptosi : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_FPTOSI $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_fptoui : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_FPTOUI $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_fptrunc : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_FPTRUNC $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_inttoptr : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_INTTOPTR $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_ptrtoint : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_PTRTOINT $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_sext : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_SEXT $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_sitofp : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_SITOFP $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_trunc : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_TRUNC $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_uitofp : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_UITOFP $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_zext : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_ZEXT $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
+def extract_vector_element_anyext : GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_ANYEXT $vector, $in),
+          (G_EXTRACT_VECTOR_ELT $root, $vector, $idx),
+   [{ return Helper.matchExtractVectorElementWithCasts(${root}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnMO(${root}, ${matchinfo}); }])>;
+
 // match_extract_of_element and insert_vector_elt_oob must be the first!
 def vector_ops_combines: GICombineGroup<[
 match_extract_of_element_undef_vector,
@@ -1624,6 +1715,19 @@ extract_vector_element_build_vector_trunc7,
 extract_vector_element_build_vector_trunc8,
 extract_vector_element_freeze,
 extract_vector_element_shuffle_vector,
+extract_vector_element_addrspace,
+extract_vector_element_fpext,
+extract_vector_element_fptosi,
+extract_vector_element_fptoui,
+extract_vector_element_fptrunc,
+extract_vector_element_inttoptr,
+extract_vector_element_ptrtoint,
+extract_vector_element_sext,
+extract_vector_element_sitofp,
+extract_vector_element_trunc,
+extract_vector_element_uitofp,
+extract_vector_element_zext,
+extract_vector_element_anyext,
 insert_vector_element_extract_vector_element
 ]>;
 

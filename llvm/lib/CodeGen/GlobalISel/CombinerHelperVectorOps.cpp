@@ -453,3 +453,96 @@ bool CombinerHelper::matchInsertVectorElementOOB(MachineInstr &MI,
 
   return false;
 }
+
+bool CombinerHelper::matchExtractVectorElementWithCasts(MachineOperand &MO,
+                                                        BuildFnTy &MatchInfo) {
+  MachineInstr *Ex = MRI.getVRegDef(MO.getReg());
+  Ex->dump();
+
+  GExtractVectorElement *Extract =
+      cast<GExtractVectorElement>(MRI.getVRegDef(MO.getReg()));
+
+  Register Vector = Extract->getVectorReg();
+
+  //
+  //  %bv:_(<2 x s32>) = G_BUILD_VECTOR %arg1(s32), %arg2(s32)
+  //  %bvz:_(<2 x s64>) = G_ZEXT %bv(<2 x s32>)
+  //  %extract:_(s64) = G_EXTRACT_VECTOR_ELT %bvz(<2 x s64>), %zero(s64)
+  //
+  //  -->
+  //
+  //  %bv:_(<2 x s32>) = G_BUILD_VECTOR %arg1(s32), %arg2(s32)
+  //  %extract:_(s32) = G_EXTRACT_VECTOR_ELT %bv(<2 x s32>), %zero(s64)
+  //  %zext:_(s64) = G_ZEXT %extract(s32)
+  //
+  //  -->
+  //
+  //  %zext:_(s64) = G_ZEXT %arg1(s32)
+  //
+  //
+  //
+  //  %bv:_(<2 x s1>) = G_ICMP intpred(sgt), %arg1(<2 x s64>), %arg2
+  //  %bvz:_(<2 x s64>) = G_ZEXT %bv(<2 x s1>)
+  //  %extract:_(s64) = G_EXTRACT_VECTOR_ELT %bvz(<2 x s64>), %opaque(s64)
+  //
+  //  -->
+  //
+  //  %bv:_(<2 x s1>) = G_ICMP intpred(sgt), %arg1(<2 x s64>), %arg2(<2 x s64>)
+  //  %extract:_(s1) = G_EXTRACT_VECTOR_ELT %bv(<2 x s1>), %opaque(s64)
+  //  %zext:_(s64) = G_ZEXT %extract(s1)
+  //
+
+  // The Vector register is def'd by a cast op. We move the scalarized
+  // op in front of the extractVectorElement. The Vector register is
+  // easier to analyze and we preserve the semantics of the cast.
+  // The result is still casted.
+
+  MachineInstr *Cx = MRI.getVRegDef(Vector);
+
+  if (!isa<GCastOp>(Cx)) {
+    Cx->dump();
+    return false;
+  }
+
+  GCastOp *Cast = cast<GCastOp>(MRI.getVRegDef(Vector));
+
+  assert(Cast->getOpcode() != TargetOpcode::G_BITCAST && "unexpected bitcast");
+
+  if (!MRI.hasOneNonDBGUse(Cast->getReg(0)))
+    return false;
+
+  // Cast types. They are both vectors.
+  LLT DstTy = MRI.getType(Cast->getReg(0));
+  LLT SrcTy = MRI.getType(Cast->getSrcReg());
+
+  // We check the legality of the scalarized cast op, e.g., G_ZEXT.
+  if (!isLegalOrBeforeLegalizer(
+          {Cast->getOpcode(), {DstTy.getScalarType(), SrcTy.getScalarType()}}))
+    return false;
+
+  // We need the ElementCount of the old vector to create the new vector type.
+  ElementCount EC = MRI.getType(Vector).getElementCount();
+
+  // We determine the types for the new extractVectorElement.
+  LLT NewVectorTy = LLT::vector(EC, SrcTy.getScalarType());
+  Register Index = Extract->getIndexReg();
+  LLT IdxTy = MRI.getType(Index);
+  LLT NewDstTy = NewVectorTy.getScalarType();
+
+  // We check the legality of the new extractVectorElement.
+  if (!isLegalOrBeforeLegalizer(
+          {TargetOpcode::G_EXTRACT_VECTOR_ELT, {NewDstTy, NewVectorTy, IdxTy}}))
+    return false;
+
+  Register Dst = Extract->getReg(0);
+
+  // We move the cast op that def'd the Vector register to the front of the
+  // extractVectorElement.
+  MatchInfo = [=](MachineIRBuilder &B) {
+    auto Extract =
+        B.buildExtractVectorElement(NewDstTy, Cast->getSrcReg(), Index);
+    B.buildInstr(Cast->getOpcode(), {Dst}, {Extract}, Cast->getFlags());
+  };
+  
+  return true;
+}

@@ -866,6 +866,11 @@ public:
   /// Combine insert vector element OOB.
   bool matchInsertVectorElementOOB(MachineInstr &MI, BuildFnTy &MatchInfo);
 
+  /// Combine extract vector element with a cast on the vector
+  /// register.
+  bool matchExtractVectorElementWithCasts(MachineOperand &MO,
+                                          BuildFnTy &MatchInfo);
+
 private:
   /// Checks for legality of an indexed variant of \p LdSt.
   bool isIndexedLoadStoreLegal(GLoadStore &LdSt) const;
