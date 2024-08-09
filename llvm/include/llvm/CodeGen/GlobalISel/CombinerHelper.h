@@ -875,6 +875,9 @@ public:
   /// Combine insert vector element OOB.
   bool matchInsertVectorElementOOB(MachineInstr &MI, BuildFnTy &MatchInfo);
 
+  bool matchCastOfBuildVector(const MachineInstr &CastMI,
+                              const MachineInstr &BVMI, BuildFnTy &MatchInfo);
+
   bool matchFreezeOfSingleMaybePoisonOperand(MachineInstr &MI,
                                              BuildFnTy &MatchInfo);
 

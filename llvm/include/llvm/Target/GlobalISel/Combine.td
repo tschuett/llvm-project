@@ -1848,13 +1848,45 @@ def select_of_zext : select_of_opcode<G_ZEXT>;
 def select_of_anyext : select_of_opcode<G_ANYEXT>;
 def select_of_truncate : select_of_opcode<G_TRUNC>;
 
+// Push cast through build vector.
+class buildvector_of_opcode<Instruction castOpcode> : GICombineRule <
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (G_BUILD_VECTOR $bv, GIVariadic<>:$unused):$Build,
+         (castOpcode $root, $bv):$Cast,
+         [{ return Helper.matchCastOfBuildVector(*${Cast}, *${Build}, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${Cast}, ${matchinfo}); }])>;
+
+def buildvector_of_zext : buildvector_of_opcode<G_ZEXT>;
+def buildvector_of_anyext : buildvector_of_opcode<G_ANYEXT>;
+def buildvector_of_truncate : buildvector_of_opcode<G_TRUNC>;
+
+def buildvector_of_zext2: GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_BUILD_VECTOR $bv, GIVariadic<>:$unused):$Build,
+          (G_ZEXT $root, $bv):$Cast,
+   [{ return Helper.matchCastOfBuildVector(*${Cast}, *${Build}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFn(*${Cast}, ${matchinfo}); }])>;
+
+def buildvector_of_zext3: GICombineRule<
+   (defs root:$root, build_fn_matchinfo:$matchinfo),
+   (match (G_BUILD_VECTOR $bv, $x, $y):$Build,
+          (G_ZEXT $root, $bv):$Cast,
+   [{ return Helper.matchCastOfBuildVector(*${Cast}, *${Build}, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFn(*${Cast}, ${matchinfo}); }])>;
+
+
 def cast_combines: GICombineGroup<[
   truncate_of_zext,
   truncate_of_sext,
   truncate_of_anyext,
   select_of_zext,
   select_of_anyext,
-  select_of_truncate
+  select_of_truncate,
+//  buildvector_of_zext,
+//  buildvector_of_anyext,
+//  buildvector_of_truncate,
+  buildvector_of_zext2
+//  buildvector_of_zext2
 ]>;
 
 
